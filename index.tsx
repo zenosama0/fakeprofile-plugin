@@ -1,12 +1,14 @@
-import { findByStoreName } from "@vendetta/metro";
+import { findByProps, findByStoreName } from "@vendetta/metro";
 import { after } from "@vendetta/patcher";
 import { storage } from "@vendetta/plugin";
 
-const { FormSection, FormRow, FormDivider, FormSwitch } = vendetta.ui.components.Forms;
-const { Button } = vendetta.ui.components;
-const { getAssetIDByName } = vendetta.ui.assets;
-const { showToast } = vendetta.ui.toasts;
-const { ReactNative: RN } = vendetta.ui.components;
+// Get React Native components via metro
+const { ScrollView, View, Text, TextInput, Image } = findByProps("ScrollView", "View", "Text", "TextInput");
+const { FormSection, FormRow, FormDivider } = findByProps("FormSection", "FormRow", "FormDivider");
+const { FormSwitch } = findByProps("FormSwitch");
+const Button = findByProps("Button")?.Button || findByProps("Button");
+const { getAssetIDByName } = findByProps("getAssetIDByName");
+const { showToast } = findByProps("showToast");
 
 const { useState, useCallback } = React;
 
@@ -200,13 +202,13 @@ export default {
       });
     }, []);
 
-    return React.createElement(RN.ScrollView, { style: { flex: 1 } },
+    return React.createElement(ScrollView, { style: { flex: 1 } },
       // Form Section
       React.createElement(FormSection, { title: editingIndex !== null ? "Edit Profile Override" : "Add New Profile Override" },
-        React.createElement(RN.View, { style: { padding: 16, gap: 12 } },
+        React.createElement(View, { style: { padding: 16, gap: 12 } },
           // User ID
-          React.createElement(RN.Text, { style: { color: "#b9bbbe", fontSize: 12, marginBottom: 4 } }, "User ID (required):"),
-          React.createElement(RN.TextInput, {
+          React.createElement(Text, { style: { color: "#b9bbbe", fontSize: 12, marginBottom: 4 } }, "User ID (required):"),
+          React.createElement(TextInput, {
             style: {
               backgroundColor: "#2f3136",
               color: "#dcddde",
@@ -222,8 +224,8 @@ export default {
           }),
 
           // Avatar URL
-          React.createElement(RN.Text, { style: { color: "#b9bbbe", fontSize: 12, marginBottom: 4 } }, "Avatar URL:"),
-          React.createElement(RN.TextInput, {
+          React.createElement(Text, { style: { color: "#b9bbbe", fontSize: 12, marginBottom: 4 } }, "Avatar URL:"),
+          React.createElement(TextInput, {
             style: {
               backgroundColor: "#2f3136",
               color: "#dcddde",
@@ -238,8 +240,8 @@ export default {
           }),
 
           // Banner URL
-          React.createElement(RN.Text, { style: { color: "#b9bbbe", fontSize: 12, marginBottom: 4 } }, "Banner URL:"),
-          React.createElement(RN.TextInput, {
+          React.createElement(Text, { style: { color: "#b9bbbe", fontSize: 12, marginBottom: 4 } }, "Banner URL:"),
+          React.createElement(TextInput, {
             style: {
               backgroundColor: "#2f3136",
               color: "#dcddde",
@@ -254,8 +256,8 @@ export default {
           }),
 
           // Display Name
-          React.createElement(RN.Text, { style: { color: "#b9bbbe", fontSize: 12, marginBottom: 4 } }, "Display Name:"),
-          React.createElement(RN.TextInput, {
+          React.createElement(Text, { style: { color: "#b9bbbe", fontSize: 12, marginBottom: 4 } }, "Display Name:"),
+          React.createElement(TextInput, {
             style: {
               backgroundColor: "#2f3136",
               color: "#dcddde",
@@ -270,8 +272,8 @@ export default {
           }),
 
           // Bio
-          React.createElement(RN.Text, { style: { color: "#b9bbbe", fontSize: 12, marginBottom: 4 } }, "Bio / About Me:"),
-          React.createElement(RN.TextInput, {
+          React.createElement(Text, { style: { color: "#b9bbbe", fontSize: 12, marginBottom: 4 } }, "Bio / About Me:"),
+          React.createElement(TextInput, {
             style: {
               backgroundColor: "#2f3136",
               color: "#dcddde",
@@ -290,8 +292,8 @@ export default {
           }),
 
           // Status
-          React.createElement(RN.Text, { style: { color: "#b9bbbe", fontSize: 12, marginBottom: 4 } }, "Custom Status:"),
-          React.createElement(RN.TextInput, {
+          React.createElement(Text, { style: { color: "#b9bbbe", fontSize: 12, marginBottom: 4 } }, "Custom Status:"),
+          React.createElement(TextInput, {
             style: {
               backgroundColor: "#2f3136",
               color: "#dcddde",
@@ -306,8 +308,8 @@ export default {
           }),
 
           // Pronouns
-          React.createElement(RN.Text, { style: { color: "#b9bbbe", fontSize: 12, marginBottom: 4 } }, "Pronouns:"),
-          React.createElement(RN.TextInput, {
+          React.createElement(Text, { style: { color: "#b9bbbe", fontSize: 12, marginBottom: 4 } }, "Pronouns:"),
+          React.createElement(TextInput, {
             style: {
               backgroundColor: "#2f3136",
               color: "#dcddde",
@@ -322,15 +324,15 @@ export default {
           }),
 
           // Buttons
-          React.createElement(RN.View, { style: { flexDirection: "row", gap: 8, marginTop: 8 } },
-            React.createElement(RN.View, { style: { flex: 1 } },
+          React.createElement(View, { style: { flexDirection: "row", gap: 8, marginTop: 8 } },
+            React.createElement(View, { style: { flex: 1 } },
               React.createElement(Button, {
                 text: editingIndex !== null ? "Save Changes" : "Add Profile",
                 color: "#5865f2",
                 onPress: handleAdd
               })
             ),
-            editingIndex !== null && React.createElement(RN.View, { style: { flex: 1 } },
+            editingIndex !== null && React.createElement(View, { style: { flex: 1 } },
               React.createElement(Button, {
                 text: "Cancel",
                 color: "#ed4245",
@@ -346,7 +348,7 @@ export default {
       // List of existing overrides
       React.createElement(FormSection, { title: `Active Overrides (${overrides.length})` },
         overrides.length === 0
-          ? React.createElement(RN.Text, {
+          ? React.createElement(Text, {
               style: {
                 color: "#72767d",
                 textAlign: "center",
@@ -355,7 +357,7 @@ export default {
               }
             }, "No profile overrides yet. Add one above!")
           : overrides.map((override: any, index: number) =>
-              React.createElement(RN.View, { key: index },
+              React.createElement(View, { key: index },
                 React.createElement(FormRow, {
                   label: `${override.displayName || "Unknown"} (${override.userId})`,
                   subLabel: [
@@ -366,11 +368,11 @@ export default {
                     override.pronouns && "Pronouns"
                   ].filter(Boolean).join(", ") || "No modifications",
                   leading: override.avatarUrl
-                    ? React.createElement(RN.Image, {
+                    ? React.createElement(Image, {
                         source: { uri: override.avatarUrl },
                         style: { width: 40, height: 40, borderRadius: 20 }
                       })
-                    : React.createElement(RN.View, {
+                    : React.createElement(View, {
                         style: {
                           width: 40,
                           height: 40,
@@ -379,8 +381,8 @@ export default {
                           justifyContent: "center",
                           alignItems: "center"
                         }
-                      }, React.createElement(RN.Text, { style: { color: "#72767d", fontSize: 16 } }, "?")),
-                  trailing: React.createElement(RN.View, { style: { flexDirection: "row", gap: 8 } },
+                      }, React.createElement(Text, { style: { color: "#72767d", fontSize: 16 } }, "?")),
+                  trailing: React.createElement(View, { style: { flexDirection: "row", gap: 8 } },
                     React.createElement(Button, {
                       text: "Edit",
                       size: "small",
@@ -400,7 +402,7 @@ export default {
             )
       ),
 
-      React.createElement(RN.View, { style: { height: 40 } })
+      React.createElement(View, { style: { height: 40 } })
     );
   }
 };
