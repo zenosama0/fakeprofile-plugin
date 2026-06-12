@@ -1,7 +1,8 @@
-import { React } from "@vendetta/metro/common";
-import { storage } from "@vendetta/storage";
+import { React, ReactNative } from "@vendetta/metro/common";
+import { storage } from "@vendetta/plugin";
 import { useProxy } from "@vendetta/storage";
-import { ScrollView, View, Text, TextInput, StyleSheet, TouchableOpacity } from "react-native";
+
+const { ScrollView, View, Text, TextInput, StyleSheet, TouchableOpacity } = ReactNative;
 
 export default function Settings() {
     useProxy(storage);
