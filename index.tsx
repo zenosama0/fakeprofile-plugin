@@ -2,28 +2,38 @@ import { findByProps, findByStoreName } from "@vendetta/metro";
 import { after } from "@vendetta/patcher";
 import { storage } from "@vendetta/plugin";
 
-// --- React Native components: try global first, then metro ---
+// --- React Native components from global (guaranteed to exist) ---
 const RN = (typeof ReactNative !== "undefined" ? ReactNative : {}) as any;
-const ScrollView = RN.ScrollView;
-const View = RN.View;
-const Text = RN.Text;
-const TextInput = RN.TextInput;
-const Image = RN.Image;
-const Pressable = RN.Pressable;
+const { ScrollView, View, Text, TextInput, Image, Pressable, TouchableOpacity } = RN;
 
-// --- Discord UI components via metro ---
-const Forms = findByProps("FormSection", "FormRow") || {};
-const FormSection = Forms.FormSection;
-const FormRow = Forms.FormRow;
-const FormDivider = Forms.FormDivider;
+// --- Try to get Discord Form components, but don't crash if missing ---
+let FormSection: any, FormRow: any, FormDivider: any;
+try {
+  const forms = findByProps("FormSection", "FormRow", "FormDivider");
+  if (forms) {
+    FormSection = forms.FormSection;
+    FormRow = forms.FormRow;
+    FormDivider = forms.FormDivider;
+  }
+} catch (e) {}
 
 // --- Toasts ---
-const Toasts = findByProps("showToast") || {};
-const showToast = Toasts.showToast || ((msg: string) => console.log("[FakeProfile]", msg));
+let showToast: any;
+try {
+  const toasts = findByProps("showToast");
+  showToast = toasts?.showToast || ((msg: string) => console.log("[FakeProfile]", msg));
+} catch (e) {
+  showToast = (msg: string) => console.log("[FakeProfile]", msg);
+}
 
 // --- Asset icons ---
-const Assets = findByProps("getAssetIDByName") || {};
-const getAssetIDByName = Assets.getAssetIDByName || (() => null);
+let getAssetIDByName: any;
+try {
+  const assets = findByProps("getAssetIDByName");
+  getAssetIDByName = assets?.getAssetIDByName || (() => null);
+} catch (e) {
+  getAssetIDByName = () => null;
+}
 
 // --- React hooks ---
 const { useState, useCallback } = React;
@@ -44,22 +54,61 @@ function getOverride(userId: string) {
 
 let patches: any[] = [];
 
-// Simple button using Pressable (works everywhere)
-function SimpleButton(props: { text: string; color?: string; onPress: () => void; size?: string }) {
+// --- Simple custom button (guaranteed to work) ---
+function Btn(props: { text: string; color?: string; onPress: () => void; style?: any }) {
   return React.createElement(Pressable, {
     onPress: props.onPress,
-    style: {
-      backgroundColor: props.color || "#5865f2",
-      paddingVertical: 8,
-      paddingHorizontal: 16,
-      borderRadius: 6,
-      alignItems: "center",
-      justifyContent: "center",
-      flex: 1
-    }
+    style: [
+      {
+        backgroundColor: props.color || "#5865f2",
+        paddingVertical: 10,
+        paddingHorizontal: 16,
+        borderRadius: 6,
+        alignItems: "center",
+        justifyContent: "center",
+      },
+      props.style
+    ]
   }, React.createElement(Text, {
     style: { color: "#ffffff", fontSize: 14, fontWeight: "600" }
   }, props.text));
+}
+
+// --- Simple custom section header ---
+function SectionTitle(props: { text: string }) {
+  return React.createElement(Text, {
+    style: {
+      color: "#b9bbbe",
+      fontSize: 12,
+      fontWeight: "700",
+      textTransform: "uppercase",
+      marginTop: 24,
+      marginBottom: 8,
+      marginHorizontal: 16,
+    }
+  }, props.text);
+}
+
+// --- Simple custom row ---
+function Row(props: { label: string; subLabel?: string; onPress?: () => void; leading?: any; trailing?: any }) {
+  return React.createElement(Pressable, {
+    onPress: props.onPress,
+    style: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+      backgroundColor: "#2f3136",
+      marginBottom: 1,
+    }
+  },
+    props.leading && React.createElement(View, { style: { marginRight: 12 } }, props.leading),
+    React.createElement(View, { style: { flex: 1 } },
+      React.createElement(Text, { style: { color: "#dcddde", fontSize: 14 } }, props.label),
+      props.subLabel && React.createElement(Text, { style: { color: "#72767d", fontSize: 12, marginTop: 2 } }, props.subLabel)
+    ),
+    props.trailing && React.createElement(View, { style: { marginLeft: 8 } }, props.trailing)
+  );
 }
 
 export default {
@@ -154,7 +203,7 @@ export default {
 
     const handleAdd = useCallback(() => {
       if (!formData.userId) {
-        showToast("User ID is required", getAssetIDByName("ic_warning_24px"));
+        showToast("User ID is required");
         return;
       }
       const newOverrides = [...overrides];
@@ -166,7 +215,7 @@ export default {
       saveToStorage(newOverrides);
       setEditingIndex(null);
       setFormData({ userId: "", avatarUrl: "", displayName: "", bio: "", status: "", bannerUrl: "", pronouns: "" });
-      showToast(editingIndex !== null ? "Profile updated!" : "Profile added!", getAssetIDByName("ic_check_24px"));
+      showToast(editingIndex !== null ? "Profile updated!" : "Profile added!");
     }, [formData, editingIndex, overrides, saveToStorage]);
 
     const handleEdit = useCallback((index: number) => {
@@ -181,7 +230,7 @@ export default {
         setEditingIndex(null);
         setFormData({ userId: "", avatarUrl: "", displayName: "", bio: "", status: "", bannerUrl: "", pronouns: "" });
       }
-      showToast("Profile removed", getAssetIDByName("ic_trash_24px"));
+      showToast("Profile removed");
     }, [overrides, editingIndex, saveToStorage]);
 
     const handleCancel = useCallback(() => {
@@ -189,131 +238,119 @@ export default {
       setFormData({ userId: "", avatarUrl: "", displayName: "", bio: "", status: "", bannerUrl: "", pronouns: "" });
     }, []);
 
-    // If critical components are missing, show error
-    if (!ScrollView || !View || !Text || !TextInput) {
-      return React.createElement(View, { style: { flex: 1, padding: 20, justifyContent: "center", alignItems: "center" } },
-        React.createElement(Text, { style: { color: "#ed4245", fontSize: 16, textAlign: "center" } },
-          "Error: Could not load UI components.\nPlugin may not be compatible with this Kettu version."
-        )
-      );
-    }
+    // --- RENDER ---
+    return React.createElement(ScrollView, { style: { flex: 1, backgroundColor: "#1e1f22" } },
 
-    return React.createElement(ScrollView, { style: { flex: 1 } },
-      FormSection && React.createElement(FormSection, { title: editingIndex !== null ? "Edit Profile Override" : "Add New Profile Override" },
-        React.createElement(View, { style: { padding: 16 } },
-          React.createElement(Text, { style: { color: "#b9bbbe", fontSize: 12, marginBottom: 4 } }, "User ID (required):"),
-          React.createElement(TextInput, {
-            style: { backgroundColor: "#2f3136", color: "#dcddde", padding: 12, borderRadius: 8, fontSize: 14, marginBottom: 12 },
-            placeholder: "123456789012345678",
-            placeholderTextColor: "#72767d",
-            value: formData.userId,
-            onChangeText: (text: string) => setFormData((prev: any) => ({ ...prev, userId: text })),
-            editable: editingIndex === null
-          }),
+      // --- ADD/EDIT FORM ---
+      SectionTitle({ text: editingIndex !== null ? "Edit Profile Override" : "Add New Profile Override" }),
 
-          React.createElement(Text, { style: { color: "#b9bbbe", fontSize: 12, marginBottom: 4 } }, "Avatar URL:"),
-          React.createElement(TextInput, {
-            style: { backgroundColor: "#2f3136", color: "#dcddde", padding: 12, borderRadius: 8, fontSize: 14, marginBottom: 12 },
-            placeholder: "https://example.com/avatar.png",
-            placeholderTextColor: "#72767d",
-            value: formData.avatarUrl,
-            onChangeText: (text: string) => setFormData((prev: any) => ({ ...prev, avatarUrl: text }))
-          }),
+      React.createElement(View, { style: { paddingHorizontal: 16 } },
+        // User ID
+        React.createElement(Text, { style: { color: "#b9bbbe", fontSize: 12, marginBottom: 4, marginTop: 8 } }, "User ID (required):"),
+        React.createElement(TextInput, {
+          style: { backgroundColor: "#2f3136", color: "#dcddde", padding: 12, borderRadius: 8, fontSize: 14, marginBottom: 12 },
+          placeholder: "123456789012345678",
+          placeholderTextColor: "#72767d",
+          value: formData.userId,
+          onChangeText: (text: string) => setFormData((prev: any) => ({ ...prev, userId: text })),
+          editable: editingIndex === null
+        }),
 
-          React.createElement(Text, { style: { color: "#b9bbbe", fontSize: 12, marginBottom: 4 } }, "Banner URL:"),
-          React.createElement(TextInput, {
-            style: { backgroundColor: "#2f3136", color: "#dcddde", padding: 12, borderRadius: 8, fontSize: 14, marginBottom: 12 },
-            placeholder: "https://example.com/banner.png",
-            placeholderTextColor: "#72767d",
-            value: formData.bannerUrl,
-            onChangeText: (text: string) => setFormData((prev: any) => ({ ...prev, bannerUrl: text }))
-          }),
+        // Avatar URL
+        React.createElement(Text, { style: { color: "#b9bbbe", fontSize: 12, marginBottom: 4 } }, "Avatar URL:"),
+        React.createElement(TextInput, {
+          style: { backgroundColor: "#2f3136", color: "#dcddde", padding: 12, borderRadius: 8, fontSize: 14, marginBottom: 12 },
+          placeholder: "https://example.com/avatar.png",
+          placeholderTextColor: "#72767d",
+          value: formData.avatarUrl,
+          onChangeText: (text: string) => setFormData((prev: any) => ({ ...prev, avatarUrl: text }))
+        }),
 
-          React.createElement(Text, { style: { color: "#b9bbbe", fontSize: 12, marginBottom: 4 } }, "Display Name:"),
-          React.createElement(TextInput, {
-            style: { backgroundColor: "#2f3136", color: "#dcddde", padding: 12, borderRadius: 8, fontSize: 14, marginBottom: 12 },
-            placeholder: "Custom Display Name",
-            placeholderTextColor: "#72767d",
-            value: formData.displayName,
-            onChangeText: (text: string) => setFormData((prev: any) => ({ ...prev, displayName: text }))
-          }),
+        // Banner URL
+        React.createElement(Text, { style: { color: "#b9bbbe", fontSize: 12, marginBottom: 4 } }, "Banner URL:"),
+        React.createElement(TextInput, {
+          style: { backgroundColor: "#2f3136", color: "#dcddde", padding: 12, borderRadius: 8, fontSize: 14, marginBottom: 12 },
+          placeholder: "https://example.com/banner.png",
+          placeholderTextColor: "#72767d",
+          value: formData.bannerUrl,
+          onChangeText: (text: string) => setFormData((prev: any) => ({ ...prev, bannerUrl: text }))
+        }),
 
-          React.createElement(Text, { style: { color: "#b9bbbe", fontSize: 12, marginBottom: 4 } }, "Bio / About Me:"),
-          React.createElement(TextInput, {
-            style: { backgroundColor: "#2f3136", color: "#dcddde", padding: 12, borderRadius: 8, fontSize: 14, height: 80, textAlignVertical: "top", marginBottom: 12 },
-            placeholder: "Custom bio text...",
-            placeholderTextColor: "#72767d",
-            value: formData.bio,
-            onChangeText: (text: string) => setFormData((prev: any) => ({ ...prev, bio: text })),
-            multiline: true,
-            numberOfLines: 4
-          }),
+        // Display Name
+        React.createElement(Text, { style: { color: "#b9bbbe", fontSize: 12, marginBottom: 4 } }, "Display Name:"),
+        React.createElement(TextInput, {
+          style: { backgroundColor: "#2f3136", color: "#dcddde", padding: 12, borderRadius: 8, fontSize: 14, marginBottom: 12 },
+          placeholder: "Custom Display Name",
+          placeholderTextColor: "#72767d",
+          value: formData.displayName,
+          onChangeText: (text: string) => setFormData((prev: any) => ({ ...prev, displayName: text }))
+        }),
 
-          React.createElement(Text, { style: { color: "#b9bbbe", fontSize: 12, marginBottom: 4 } }, "Custom Status:"),
-          React.createElement(TextInput, {
-            style: { backgroundColor: "#2f3136", color: "#dcddde", padding: 12, borderRadius: 8, fontSize: 14, marginBottom: 12 },
-            placeholder: "Playing something...",
-            placeholderTextColor: "#72767d",
-            value: formData.status,
-            onChangeText: (text: string) => setFormData((prev: any) => ({ ...prev, status: text }))
-          }),
+        // Bio
+        React.createElement(Text, { style: { color: "#b9bbbe", fontSize: 12, marginBottom: 4 } }, "Bio / About Me:"),
+        React.createElement(TextInput, {
+          style: { backgroundColor: "#2f3136", color: "#dcddde", padding: 12, borderRadius: 8, fontSize: 14, height: 80, textAlignVertical: "top", marginBottom: 12 },
+          placeholder: "Custom bio text...",
+          placeholderTextColor: "#72767d",
+          value: formData.bio,
+          onChangeText: (text: string) => setFormData((prev: any) => ({ ...prev, bio: text })),
+          multiline: true,
+          numberOfLines: 4
+        }),
 
-          React.createElement(Text, { style: { color: "#b9bbbe", fontSize: 12, marginBottom: 4 } }, "Pronouns:"),
-          React.createElement(TextInput, {
-            style: { backgroundColor: "#2f3136", color: "#dcddde", padding: 12, borderRadius: 8, fontSize: 14, marginBottom: 12 },
-            placeholder: "they/them",
-            placeholderTextColor: "#72767d",
-            value: formData.pronouns,
-            onChangeText: (text: string) => setFormData((prev: any) => ({ ...prev, pronouns: text }))
-          }),
+        // Status
+        React.createElement(Text, { style: { color: "#b9bbbe", fontSize: 12, marginBottom: 4 } }, "Custom Status:"),
+        React.createElement(TextInput, {
+          style: { backgroundColor: "#2f3136", color: "#dcddde", padding: 12, borderRadius: 8, fontSize: 14, marginBottom: 12 },
+          placeholder: "Playing something...",
+          placeholderTextColor: "#72767d",
+          value: formData.status,
+          onChangeText: (text: string) => setFormData((prev: any) => ({ ...prev, status: text }))
+        }),
 
-          Pressable && React.createElement(View, { style: { flexDirection: "row", gap: 8, marginTop: 8 } },
-            React.createElement(SimpleButton, {
-              text: editingIndex !== null ? "Save Changes" : "Add Profile",
-              color: "#5865f2",
-              onPress: handleAdd
-            }),
-            editingIndex !== null && React.createElement(SimpleButton, {
-              text: "Cancel",
-              color: "#ed4245",
-              onPress: handleCancel
-            })
-          )
+        // Pronouns
+        React.createElement(Text, { style: { color: "#b9bbbe", fontSize: 12, marginBottom: 4 } }, "Pronouns:"),
+        React.createElement(TextInput, {
+          style: { backgroundColor: "#2f3136", color: "#dcddde", padding: 12, borderRadius: 8, fontSize: 14, marginBottom: 12 },
+          placeholder: "they/them",
+          placeholderTextColor: "#72767d",
+          value: formData.pronouns,
+          onChangeText: (text: string) => setFormData((prev: any) => ({ ...prev, pronouns: text }))
+        }),
+
+        // Buttons
+        React.createElement(View, { style: { flexDirection: "row", gap: 8, marginTop: 8 } },
+          React.createElement(Btn, { text: editingIndex !== null ? "Save Changes" : "Add Profile", color: "#5865f2", onPress: handleAdd, style: { flex: 1 } }),
+          editingIndex !== null && React.createElement(Btn, { text: "Cancel", color: "#ed4245", onPress: handleCancel, style: { flex: 1 } })
         )
       ),
 
-      FormDivider && React.createElement(FormDivider),
+      // --- LIST OF OVERRIDES ---
+      SectionTitle({ text: `Active Overrides (${overrides.length})` }),
 
-      FormSection && React.createElement(FormSection, { title: `Active Overrides (${overrides.length})` },
-        overrides.length === 0
-          ? React.createElement(Text, { style: { color: "#72767d", textAlign: "center", padding: 24, fontSize: 14 } },
-              "No profile overrides yet. Add one above!"
-            )
-          : overrides.map((override: any, index: number) =>
-              React.createElement(View, { key: index },
-                FormRow && React.createElement(FormRow, {
-                  label: `${override.displayName || "Unknown"} (${override.userId})`,
-                  subLabel: [
-                    override.avatarUrl && "Avatar",
-                    override.bannerUrl && "Banner",
-                    override.bio && "Bio",
-                    override.status && "Status",
-                    override.pronouns && "Pronouns"
-                  ].filter(Boolean).join(", ") || "No modifications",
+      overrides.length === 0
+        ? React.createElement(Text, { style: { color: "#72767d", textAlign: "center", padding: 24, fontSize: 14 } },
+            "No profile overrides yet. Add one above!"
+          )
+        : React.createElement(View, { style: { marginHorizontal: 16 } },
+            overrides.map((override: any, index: number) =>
+              React.createElement(View, { key: index, style: { marginBottom: 8 } },
+                Row({
+                  label: `${override.displayName || "Unknown"}`,
+                  subLabel: override.userId,
                   leading: override.avatarUrl && Image
                     ? React.createElement(Image, { source: { uri: override.avatarUrl }, style: { width: 40, height: 40, borderRadius: 20 } })
                     : React.createElement(View, { style: { width: 40, height: 40, borderRadius: 20, backgroundColor: "#36393f", justifyContent: "center", alignItems: "center" } },
                         React.createElement(Text, { style: { color: "#72767d", fontSize: 16 } }, "?")
                       ),
-                  trailing: Pressable && React.createElement(View, { style: { flexDirection: "row", gap: 8 } },
-                    React.createElement(SimpleButton, { text: "Edit", color: "#5865f2", onPress: () => handleEdit(index) }),
-                    React.createElement(SimpleButton, { text: "Remove", color: "#ed4245", onPress: () => handleRemove(index) })
+                  trailing: React.createElement(View, { style: { flexDirection: "row", gap: 8 } },
+                    React.createElement(Btn, { text: "Edit", color: "#5865f2", onPress: () => handleEdit(index) }),
+                    React.createElement(Btn, { text: "Remove", color: "#ed4245", onPress: () => handleRemove(index) })
                   )
-                }),
-                FormDivider && index < overrides.length - 1 && React.createElement(FormDivider)
+                })
               )
             )
-      ),
+          ),
 
       React.createElement(View, { style: { height: 40 } })
     );
