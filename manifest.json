@@ -1,0 +1,14 @@
+{
+  "name": "FakeProfile",
+  "description": "Client-side profile modifications for any user. Change avatars, display names, bios, and statuses locally.",
+  "authors": [
+    {
+      "name": "Ray",
+      "id": "618343471123529741"
+    }
+  ],
+  "main": "index.tsx",
+  "vendetta": {
+    "icon": "ic_profile_24px"
+  }
+}
