@@ -1,14 +1,1 @@
-{
-    "name": "FakeProfile",
-    "description": "Client-side profile modifications for any user. Change avatars, display names, bios, banners, statuses, and pronouns locally. Supports multiple users with add/remove/edit functionality.",
-    "authors": [
-        {
-            "name": "zenosama0",
-            "id": "0"
-        }
-    ],
-    "main": "index.js",
-    "vendetta": {
-        "icon": "ic_profile_24px"
-    }
-}
+{"name":"FakeProfile","description":"Client-side profile modifications for any user. Change avatars, display names, bios, banners, statuses, and pronouns locally. Supports multiple users with add/remove/edit functionality.","authors":[{"name":"zenosama0","id":"0"}],"main":"index.js","vendetta":{"icon":"ic_profile_24px"},"hash":"5c5585558376296a2331f8438138658a4edc2afeeb9da02a18046b74e5ecb8c3"}
