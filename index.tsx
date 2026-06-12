@@ -1,41 +1,21 @@
-import { findByProps, findByStoreName } from "@vendetta/metro";
+import { findByStoreName } from "@vendetta/metro";
 import { after } from "@vendetta/patcher";
 import { storage } from "@vendetta/plugin";
-import { useState, useCallback } from "react";
-import { 
-  Forms, 
-  TextInput, 
-  Button, 
-  ScrollView, 
-  View, 
-  Text,
-  ReactNative as RN 
-} from "@vendetta/ui/components";
-import { getAssetIDByName } from "@vendetta/ui/assets";
-import { showToast } from "@vendetta/ui/toasts";
 
-const { FormSection, FormRow, FormSwitch, FormDivider } = Forms;
-const { TextInput: FormTextInput } = TextInput;
+const { FormSection, FormRow, FormDivider, FormSwitch } = vendetta.ui.components.Forms;
+const { Button } = vendetta.ui.components;
+const { getAssetIDByName } = vendetta.ui.assets;
+const { showToast } = vendetta.ui.toasts;
+const { ReactNative: RN } = vendetta.ui.components;
+
+const { useState, useCallback } = React;
 
 // Default storage structure
-const defaultStorage = {
-  overrides: [] as Array<{
-    userId: string;
-    avatarUrl: string;
-    displayName: string;
-    bio: string;
-    status: string;
-    bannerUrl: string;
-    pronouns: string;
-  }>
-};
-
-// Initialize storage if empty
 if (!storage.overrides) {
-  storage.overrides = defaultStorage.overrides;
+  storage.overrides = [];
 }
 
-// Get UserStore to patch user data
+// Get stores to patch user data
 const UserStore = findByStoreName("UserStore");
 const UserProfileStore = findByStoreName("UserProfileStore");
 
@@ -56,7 +36,6 @@ export default {
       const override = getOverride(ret.id);
       if (!override) return ret;
 
-      // Create modified user object
       const modified = { ...ret };
       
       if (override.avatarUrl) {
@@ -97,25 +76,25 @@ export default {
       return modified;
     });
 
-    // Patch getUserStatus if available for custom status
+    // Try to patch PresenceStore for custom status
     try {
-      const StatusStore = findByStoreName("PresenceStore");
-      const statusPatch = after("getState", StatusStore, (args, ret) => {
-        // This is a more complex patch - we modify the state object
+      const PresenceStore = findByStoreName("PresenceStore");
+      const statusPatch = after("getState", PresenceStore, (args, ret) => {
+        if (!ret || !ret.getStatus) return ret;
+        
         const originalGetStatus = ret.getStatus;
-        if (originalGetStatus) {
-          ret.getStatus = (userId: string) => {
-            const override = getOverride(userId);
-            if (override?.status) {
-              return {
-                ...originalGetStatus(userId),
-                status: override.status,
-                customStatus: { name: override.status }
-              };
-            }
-            return originalGetStatus(userId);
-          };
-        }
+        ret.getStatus = (userId: string) => {
+          const override = getOverride(userId);
+          if (override?.status) {
+            const original = originalGetStatus(userId);
+            return {
+              ...original,
+              status: override.status,
+              customStatus: { name: override.status }
+            };
+          }
+          return originalGetStatus(userId);
+        };
         return ret;
       });
       patches.push(statusPatch);
@@ -127,7 +106,6 @@ export default {
   },
 
   onUnload: () => {
-    // Unpatch everything
     patches.forEach(p => p?.());
     patches = [];
   },
@@ -137,7 +115,6 @@ export default {
     const [overrides, setOverrides] = useState(storage.overrides || []);
     const [editingIndex, setEditingIndex] = useState<number | null>(null);
     
-    // Temporary state for new/edit entry
     const [formData, setFormData] = useState({
       userId: "",
       avatarUrl: "",
@@ -162,10 +139,8 @@ export default {
       const newOverrides = [...overrides];
       
       if (editingIndex !== null) {
-        // Edit existing
         newOverrides[editingIndex] = { ...formData };
       } else {
-        // Add new
         newOverrides.push({ ...formData });
       }
 
@@ -193,7 +168,7 @@ export default {
     }, [overrides]);
 
     const handleRemove = useCallback((index: number) => {
-      const newOverrides = overrides.filter((_, i) => i !== index);
+      const newOverrides = overrides.filter((_: any, i: number) => i !== index);
       saveToStorage(newOverrides);
       
       if (editingIndex === index) {
@@ -225,227 +200,207 @@ export default {
       });
     }, []);
 
-    return (
-      <ScrollView style={{ flex: 1 }}>
-        {/* Form Section */}
-        <FormSection title={editingIndex !== null ? "Edit Profile Override" : "Add New Profile Override"}>
-          <View style={{ padding: 16, gap: 12 }}>
-            <Text style={{ color: "#b9bbbe", fontSize: 12, marginBottom: 4 }}>
-              User ID (required):
-            </Text>
-            <RN.TextInput
-              style={{
-                backgroundColor: "#2f3136",
-                color: "#dcddde",
-                padding: 12,
-                borderRadius: 8,
+    return React.createElement(RN.ScrollView, { style: { flex: 1 } },
+      // Form Section
+      React.createElement(FormSection, { title: editingIndex !== null ? "Edit Profile Override" : "Add New Profile Override" },
+        React.createElement(RN.View, { style: { padding: 16, gap: 12 } },
+          // User ID
+          React.createElement(RN.Text, { style: { color: "#b9bbbe", fontSize: 12, marginBottom: 4 } }, "User ID (required):"),
+          React.createElement(RN.TextInput, {
+            style: {
+              backgroundColor: "#2f3136",
+              color: "#dcddde",
+              padding: 12,
+              borderRadius: 8,
+              fontSize: 14
+            },
+            placeholder: "123456789012345678",
+            placeholderTextColor: "#72767d",
+            value: formData.userId,
+            onChangeText: (text: string) => setFormData((prev: any) => ({ ...prev, userId: text })),
+            editable: editingIndex === null
+          }),
+
+          // Avatar URL
+          React.createElement(RN.Text, { style: { color: "#b9bbbe", fontSize: 12, marginBottom: 4 } }, "Avatar URL:"),
+          React.createElement(RN.TextInput, {
+            style: {
+              backgroundColor: "#2f3136",
+              color: "#dcddde",
+              padding: 12,
+              borderRadius: 8,
+              fontSize: 14
+            },
+            placeholder: "https://example.com/avatar.png",
+            placeholderTextColor: "#72767d",
+            value: formData.avatarUrl,
+            onChangeText: (text: string) => setFormData((prev: any) => ({ ...prev, avatarUrl: text }))
+          }),
+
+          // Banner URL
+          React.createElement(RN.Text, { style: { color: "#b9bbbe", fontSize: 12, marginBottom: 4 } }, "Banner URL:"),
+          React.createElement(RN.TextInput, {
+            style: {
+              backgroundColor: "#2f3136",
+              color: "#dcddde",
+              padding: 12,
+              borderRadius: 8,
+              fontSize: 14
+            },
+            placeholder: "https://example.com/banner.png",
+            placeholderTextColor: "#72767d",
+            value: formData.bannerUrl,
+            onChangeText: (text: string) => setFormData((prev: any) => ({ ...prev, bannerUrl: text }))
+          }),
+
+          // Display Name
+          React.createElement(RN.Text, { style: { color: "#b9bbbe", fontSize: 12, marginBottom: 4 } }, "Display Name:"),
+          React.createElement(RN.TextInput, {
+            style: {
+              backgroundColor: "#2f3136",
+              color: "#dcddde",
+              padding: 12,
+              borderRadius: 8,
+              fontSize: 14
+            },
+            placeholder: "Custom Display Name",
+            placeholderTextColor: "#72767d",
+            value: formData.displayName,
+            onChangeText: (text: string) => setFormData((prev: any) => ({ ...prev, displayName: text }))
+          }),
+
+          // Bio
+          React.createElement(RN.Text, { style: { color: "#b9bbbe", fontSize: 12, marginBottom: 4 } }, "Bio / About Me:"),
+          React.createElement(RN.TextInput, {
+            style: {
+              backgroundColor: "#2f3136",
+              color: "#dcddde",
+              padding: 12,
+              borderRadius: 8,
+              fontSize: 14,
+              height: 80,
+              textAlignVertical: "top"
+            },
+            placeholder: "Custom bio text...",
+            placeholderTextColor: "#72767d",
+            value: formData.bio,
+            onChangeText: (text: string) => setFormData((prev: any) => ({ ...prev, bio: text })),
+            multiline: true,
+            numberOfLines: 4
+          }),
+
+          // Status
+          React.createElement(RN.Text, { style: { color: "#b9bbbe", fontSize: 12, marginBottom: 4 } }, "Custom Status:"),
+          React.createElement(RN.TextInput, {
+            style: {
+              backgroundColor: "#2f3136",
+              color: "#dcddde",
+              padding: 12,
+              borderRadius: 8,
+              fontSize: 14
+            },
+            placeholder: "Playing something...",
+            placeholderTextColor: "#72767d",
+            value: formData.status,
+            onChangeText: (text: string) => setFormData((prev: any) => ({ ...prev, status: text }))
+          }),
+
+          // Pronouns
+          React.createElement(RN.Text, { style: { color: "#b9bbbe", fontSize: 12, marginBottom: 4 } }, "Pronouns:"),
+          React.createElement(RN.TextInput, {
+            style: {
+              backgroundColor: "#2f3136",
+              color: "#dcddde",
+              padding: 12,
+              borderRadius: 8,
+              fontSize: 14
+            },
+            placeholder: "they/them",
+            placeholderTextColor: "#72767d",
+            value: formData.pronouns,
+            onChangeText: (text: string) => setFormData((prev: any) => ({ ...prev, pronouns: text }))
+          }),
+
+          // Buttons
+          React.createElement(RN.View, { style: { flexDirection: "row", gap: 8, marginTop: 8 } },
+            React.createElement(RN.View, { style: { flex: 1 } },
+              React.createElement(Button, {
+                text: editingIndex !== null ? "Save Changes" : "Add Profile",
+                color: "#5865f2",
+                onPress: handleAdd
+              })
+            ),
+            editingIndex !== null && React.createElement(RN.View, { style: { flex: 1 } },
+              React.createElement(Button, {
+                text: "Cancel",
+                color: "#ed4245",
+                onPress: handleCancel
+              })
+            )
+          )
+        )
+      ),
+
+      React.createElement(FormDivider),
+
+      // List of existing overrides
+      React.createElement(FormSection, { title: `Active Overrides (${overrides.length})` },
+        overrides.length === 0
+          ? React.createElement(RN.Text, {
+              style: {
+                color: "#72767d",
+                textAlign: "center",
+                padding: 24,
                 fontSize: 14
-              }}
-              placeholder="123456789012345678"
-              placeholderTextColor="#72767d"
-              value={formData.userId}
-              onChangeText={(text: string) => setFormData(prev => ({ ...prev, userId: text }))}
-              editable={editingIndex === null}
-            />
-
-            <Text style={{ color: "#b9bbbe", fontSize: 12, marginBottom: 4 }}>
-              Avatar URL:
-            </Text>
-            <RN.TextInput
-              style={{
-                backgroundColor: "#2f3136",
-                color: "#dcddde",
-                padding: 12,
-                borderRadius: 8,
-                fontSize: 14
-              }}
-              placeholder="https://example.com/avatar.png"
-              placeholderTextColor="#72767d"
-              value={formData.avatarUrl}
-              onChangeText={(text: string) => setFormData(prev => ({ ...prev, avatarUrl: text }))}
-            />
-
-            <Text style={{ color: "#b9bbbe", fontSize: 12, marginBottom: 4 }}>
-              Banner URL:
-            </Text>
-            <RN.TextInput
-              style={{
-                backgroundColor: "#2f3136",
-                color: "#dcddde",
-                padding: 12,
-                borderRadius: 8,
-                fontSize: 14
-              }}
-              placeholder="https://example.com/banner.png"
-              placeholderTextColor="#72767d"
-              value={formData.bannerUrl}
-              onChangeText={(text: string) => setFormData(prev => ({ ...prev, bannerUrl: text }))}
-            />
-
-            <Text style={{ color: "#b9bbbe", fontSize: 12, marginBottom: 4 }}>
-              Display Name:
-            </Text>
-            <RN.TextInput
-              style={{
-                backgroundColor: "#2f3136",
-                color: "#dcddde",
-                padding: 12,
-                borderRadius: 8,
-                fontSize: 14
-              }}
-              placeholder="Custom Display Name"
-              placeholderTextColor="#72767d"
-              value={formData.displayName}
-              onChangeText={(text: string) => setFormData(prev => ({ ...prev, displayName: text }))}
-            />
-
-            <Text style={{ color: "#b9bbbe", fontSize: 12, marginBottom: 4 }}>
-              Bio / About Me:
-            </Text>
-            <RN.TextInput
-              style={{
-                backgroundColor: "#2f3136",
-                color: "#dcddde",
-                padding: 12,
-                borderRadius: 8,
-                fontSize: 14,
-                height: 80,
-                textAlignVertical: "top"
-              }}
-              placeholder="Custom bio text..."
-              placeholderTextColor="#72767d"
-              value={formData.bio}
-              onChangeText={(text: string) => setFormData(prev => ({ ...prev, bio: text }))}
-              multiline
-              numberOfLines={4}
-            />
-
-            <Text style={{ color: "#b9bbbe", fontSize: 12, marginBottom: 4 }}>
-              Custom Status:
-            </Text>
-            <RN.TextInput
-              style={{
-                backgroundColor: "#2f3136",
-                color: "#dcddde",
-                padding: 12,
-                borderRadius: 8,
-                fontSize: 14
-              }}
-              placeholder="Playing something..."
-              placeholderTextColor="#72767d"
-              value={formData.status}
-              onChangeText={(text: string) => setFormData(prev => ({ ...prev, status: text }))}
-            />
-
-            <Text style={{ color: "#b9bbbe", fontSize: 12, marginBottom: 4 }}>
-              Pronouns:
-            </Text>
-            <RN.TextInput
-              style={{
-                backgroundColor: "#2f3136",
-                color: "#dcddde",
-                padding: 12,
-                borderRadius: 8,
-                fontSize: 14
-              }}
-              placeholder="they/them"
-              placeholderTextColor="#72767d"
-              value={formData.pronouns}
-              onChangeText={(text: string) => setFormData(prev => ({ ...prev, pronouns: text }))}
-            />
-
-            <View style={{ flexDirection: "row", gap: 8, marginTop: 8 }}>
-              <View style={{ flex: 1 }}>
-                <Button
-                  text={editingIndex !== null ? "Save Changes" : "Add Profile"}
-                  color="#5865f2"
-                  onPress={handleAdd}
-                />
-              </View>
-              {editingIndex !== null && (
-                <View style={{ flex: 1 }}>
-                  <Button
-                    text="Cancel"
-                    color="#ed4245"
-                    onPress={handleCancel}
-                  />
-                </View>
-              )}
-            </View>
-          </View>
-        </FormSection>
-
-        <FormDivider />
-
-        {/* List of existing overrides */}
-        <FormSection title={`Active Overrides (${overrides.length})`}>
-          {overrides.length === 0 ? (
-            <Text style={{ 
-              color: "#72767d", 
-              textAlign: "center", 
-              padding: 24,
-              fontSize: 14 
-            }}>
-              No profile overrides yet. Add one above!
-            </Text>
-          ) : (
-            overrides.map((override: any, index: number) => (
-              <View key={index}>
-                <FormRow
-                  label={`${override.displayName || "Unknown"} (${override.userId})`}
-                  subLabel={[
+              }
+            }, "No profile overrides yet. Add one above!")
+          : overrides.map((override: any, index: number) =>
+              React.createElement(RN.View, { key: index },
+                React.createElement(FormRow, {
+                  label: `${override.displayName || "Unknown"} (${override.userId})`,
+                  subLabel: [
                     override.avatarUrl && "Avatar",
-                    override.bannerUrl && "Banner", 
+                    override.bannerUrl && "Banner",
                     override.bio && "Bio",
                     override.status && "Status",
                     override.pronouns && "Pronouns"
-                  ].filter(Boolean).join(", ") || "No modifications"}
-                  leading={
-                    override.avatarUrl ? (
-                      <RN.Image
-                        source={{ uri: override.avatarUrl }}
-                        style={{ width: 40, height: 40, borderRadius: 20 }}
-                      />
-                    ) : (
-                      <RN.View style={{ 
-                        width: 40, 
-                        height: 40, 
-                        borderRadius: 20,
-                        backgroundColor: "#36393f",
-                        justifyContent: "center",
-                        alignItems: "center"
-                      }}>
-                        <Text style={{ color: "#72767d", fontSize: 16 }}>
-                          ?
-                        </Text>
-                      </RN.View>
-                    )
-                  }
-                  trailing={
-                    <View style={{ flexDirection: "row", gap: 8 }}>
-                      <Button
-                        text="Edit"
-                        size="small"
-                        color="#5865f2"
-                        onPress={() => handleEdit(index)}
-                      />
-                      <Button
-                        text="Remove"
-                        size="small"
-                        color="#ed4245"
-                        onPress={() => handleRemove(index)}
-                      />
-                    </View>
-                  }
-                />
-                {index < overrides.length - 1 && <FormDivider />}
-              </View>
-            ))
-          )}
-        </FormSection>
+                  ].filter(Boolean).join(", ") || "No modifications",
+                  leading: override.avatarUrl
+                    ? React.createElement(RN.Image, {
+                        source: { uri: override.avatarUrl },
+                        style: { width: 40, height: 40, borderRadius: 20 }
+                      })
+                    : React.createElement(RN.View, {
+                        style: {
+                          width: 40,
+                          height: 40,
+                          borderRadius: 20,
+                          backgroundColor: "#36393f",
+                          justifyContent: "center",
+                          alignItems: "center"
+                        }
+                      }, React.createElement(RN.Text, { style: { color: "#72767d", fontSize: 16 } }, "?")),
+                  trailing: React.createElement(RN.View, { style: { flexDirection: "row", gap: 8 } },
+                    React.createElement(Button, {
+                      text: "Edit",
+                      size: "small",
+                      color: "#5865f2",
+                      onPress: () => handleEdit(index)
+                    }),
+                    React.createElement(Button, {
+                      text: "Remove",
+                      size: "small",
+                      color: "#ed4245",
+                      onPress: () => handleRemove(index)
+                    })
+                  )
+                }),
+                index < overrides.length - 1 && React.createElement(FormDivider)
+              )
+            )
+      ),
 
-        <View style={{ height: 40 }} />
-      </ScrollView>
+      React.createElement(RN.View, { style: { height: 40 } })
     );
   }
 };
