@@ -1,1 +1,1 @@
-{"name":"FakeProfile","description":"Client-side profile modifications for any user.","authors":[{"name":"zenosama0","id":"0"}],"main":"index.js","vendetta":{"icon":"ic_profile_24px"},"hash":"d814fcdb947dd7c52fee84cfc69beb94379040a728fc1703915d1b95bc676d8a"}
+{"name":"FakeProfile","description":"Client-side profile modifications via notes. Format: override::Display Name|Bio|PFP Link|Status","authors":[{"name":"zenosama0","id":"0"}],"main":"index.js","vendetta":{"icon":"ic_profile_24px"},"hash":"a54d46fd3fdc75b6f8b28ff4f61e8e56f71e35db1ef14246529b348c5aaf5be8"}
