@@ -1,1 +1,404 @@
-(function(){"use strict";(function(R,i,v,f){const{ScrollView:P,View:u,Text:s,TextInput:d,Image:N}=i.findByProps("ScrollView","View","Text","TextInput"),{FormSection:C,FormRow:T,FormDivider:B}=i.findByProps("FormSection","FormRow","FormDivider");i.findByProps("FormSwitch");const y=i.findByProps("Button")?.Button||i.findByProps("Button"),{getAssetIDByName:E}=i.findByProps("getAssetIDByName"),{showToast:S}=i.findByProps("showToast"),{useState:x,useCallback:m}=React;f.storage.overrides||(f.storage.overrides=[]);const z=i.findByStoreName("UserStore"),I=i.findByStoreName("UserProfileStore");function U(l){return f.storage.overrides.find(function(b){return b.userId===l})}let h=[];var w={onLoad:function(){const l=v.after("getUser",z,function(o,a){if(!a)return a;const r=U(a.id);if(!r)return a;const t={...a};return r.avatarUrl&&(t.avatar=r.avatarUrl,t.avatarDecoration=null),r.displayName&&(t.globalName=r.displayName,t.username=r.displayName),r.bannerUrl&&(t.banner=r.bannerUrl),t}),b=v.after("getUserProfile",I,function(o,a){if(!a)return a;const r=o[0],t=U(r);if(!t)return a;const c={...a};return t.bio&&(c.bio=t.bio),t.pronouns&&(c.pronouns=t.pronouns),c});try{const o=i.findByStoreName("PresenceStore"),a=v.after("getState",o,function(r,t){if(!t||!t.getStatus)return t;const c=t.getStatus;return t.getStatus=function(p){const g=U(p);return g?.status?{...c(p),status:g.status,customStatus:{name:g.status}}:c(p)},t});h.push(a)}catch(o){console.log("[FakeProfile] Status patch failed:",o)}h.push(l,b)},onUnload:function(){h.forEach(function(l){return l?.()}),h=[]},settings:function(){const[l,b]=x(f.storage.overrides||[]),[o,a]=x(null),[r,t]=x({userId:"",avatarUrl:"",displayName:"",bio:"",status:"",bannerUrl:"",pronouns:""}),c=m(function(e){f.storage.overrides=e,b(e)},[]),p=m(function(){if(!r.userId){S("User ID is required",E("ic_warning_24px"));return}const e=[...l];o!==null?e[o]={...r}:e.push({...r}),c(e),a(null),t({userId:"",avatarUrl:"",displayName:"",bio:"",status:"",bannerUrl:"",pronouns:""}),S(o!==null?"Profile updated!":"Profile added!",E("ic_check_24px"))},[r,o,l,c]),g=m(function(e){a(e),t({...l[e]})},[l]),k=m(function(e){const n=l.filter(function(F,D){return D!==e});c(n),o===e&&(a(null),t({userId:"",avatarUrl:"",displayName:"",bio:"",status:"",bannerUrl:"",pronouns:""})),S("Profile removed",E("ic_trash_24px"))},[l,o,c]),A=m(function(){a(null),t({userId:"",avatarUrl:"",displayName:"",bio:"",status:"",bannerUrl:"",pronouns:""})},[]);return React.createElement(P,{style:{flex:1}},React.createElement(C,{title:o!==null?"Edit Profile Override":"Add New Profile Override"},React.createElement(u,{style:{padding:16,gap:12}},React.createElement(s,{style:{color:"#b9bbbe",fontSize:12,marginBottom:4}},"User ID (required):"),React.createElement(d,{style:{backgroundColor:"#2f3136",color:"#dcddde",padding:12,borderRadius:8,fontSize:14},placeholder:"123456789012345678",placeholderTextColor:"#72767d",value:r.userId,onChangeText:function(e){return t(function(n){return{...n,userId:e}})},editable:o===null}),React.createElement(s,{style:{color:"#b9bbbe",fontSize:12,marginBottom:4}},"Avatar URL:"),React.createElement(d,{style:{backgroundColor:"#2f3136",color:"#dcddde",padding:12,borderRadius:8,fontSize:14},placeholder:"https://example.com/avatar.png",placeholderTextColor:"#72767d",value:r.avatarUrl,onChangeText:function(e){return t(function(n){return{...n,avatarUrl:e}})}}),React.createElement(s,{style:{color:"#b9bbbe",fontSize:12,marginBottom:4}},"Banner URL:"),React.createElement(d,{style:{backgroundColor:"#2f3136",color:"#dcddde",padding:12,borderRadius:8,fontSize:14},placeholder:"https://example.com/banner.png",placeholderTextColor:"#72767d",value:r.bannerUrl,onChangeText:function(e){return t(function(n){return{...n,bannerUrl:e}})}}),React.createElement(s,{style:{color:"#b9bbbe",fontSize:12,marginBottom:4}},"Display Name:"),React.createElement(d,{style:{backgroundColor:"#2f3136",color:"#dcddde",padding:12,borderRadius:8,fontSize:14},placeholder:"Custom Display Name",placeholderTextColor:"#72767d",value:r.displayName,onChangeText:function(e){return t(function(n){return{...n,displayName:e}})}}),React.createElement(s,{style:{color:"#b9bbbe",fontSize:12,marginBottom:4}},"Bio / About Me:"),React.createElement(d,{style:{backgroundColor:"#2f3136",color:"#dcddde",padding:12,borderRadius:8,fontSize:14,height:80,textAlignVertical:"top"},placeholder:"Custom bio text...",placeholderTextColor:"#72767d",value:r.bio,onChangeText:function(e){return t(function(n){return{...n,bio:e}})},multiline:!0,numberOfLines:4}),React.createElement(s,{style:{color:"#b9bbbe",fontSize:12,marginBottom:4}},"Custom Status:"),React.createElement(d,{style:{backgroundColor:"#2f3136",color:"#dcddde",padding:12,borderRadius:8,fontSize:14},placeholder:"Playing something...",placeholderTextColor:"#72767d",value:r.status,onChangeText:function(e){return t(function(n){return{...n,status:e}})}}),React.createElement(s,{style:{color:"#b9bbbe",fontSize:12,marginBottom:4}},"Pronouns:"),React.createElement(d,{style:{backgroundColor:"#2f3136",color:"#dcddde",padding:12,borderRadius:8,fontSize:14},placeholder:"they/them",placeholderTextColor:"#72767d",value:r.pronouns,onChangeText:function(e){return t(function(n){return{...n,pronouns:e}})}}),React.createElement(u,{style:{flexDirection:"row",gap:8,marginTop:8}},React.createElement(u,{style:{flex:1}},React.createElement(y,{text:o!==null?"Save Changes":"Add Profile",color:"#5865f2",onPress:p})),o!==null&&React.createElement(u,{style:{flex:1}},React.createElement(y,{text:"Cancel",color:"#ed4245",onPress:A}))))),React.createElement(B),React.createElement(C,{title:`Active Overrides (${l.length})`},l.length===0?React.createElement(s,{style:{color:"#72767d",textAlign:"center",padding:24,fontSize:14}},"No profile overrides yet. Add one above!"):l.map(function(e,n){return React.createElement(u,{key:n},React.createElement(T,{label:`${e.displayName||"Unknown"} (${e.userId})`,subLabel:[e.avatarUrl&&"Avatar",e.bannerUrl&&"Banner",e.bio&&"Bio",e.status&&"Status",e.pronouns&&"Pronouns"].filter(Boolean).join(", ")||"No modifications",leading:e.avatarUrl?React.createElement(N,{source:{uri:e.avatarUrl},style:{width:40,height:40,borderRadius:20}}):React.createElement(u,{style:{width:40,height:40,borderRadius:20,backgroundColor:"#36393f",justifyContent:"center",alignItems:"center"}},React.createElement(s,{style:{color:"#72767d",fontSize:16}},"?")),trailing:React.createElement(u,{style:{flexDirection:"row",gap:8}},React.createElement(y,{text:"Edit",size:"small",color:"#5865f2",onPress:function(){return g(n)}}),React.createElement(y,{text:"Remove",size:"small",color:"#ed4245",onPress:function(){return k(n)}}))}),n<l.length-1&&React.createElement(B))})),React.createElement(u,{style:{height:40}}))}};return R.default=w,Object.defineProperty(R,"__esModule",{value:!0}),R})({},vendetta.metro,vendetta.patcher,vendetta.plugin)})();
+(function(){"use strict";(function(exports, metro, patcher, plugin){
+const {findByStoreName} = metro;
+const {after} = patcher;
+const {storage} = plugin;
+const {ReactNative} = metro.common;
+const {Forms} = vendetta.ui.components;
+const {getAssetIDByName} = vendetta.ui.assets;
+const {useProxy} = vendetta.storage;
+
+const {ScrollView, View, Text, TextInput, Image, TouchableOpacity} = ReactNative;
+const {FormSection, FormRow, FormDivider} = Forms;
+const React = window.React;
+
+// Storage init
+if (!storage.overrides) {
+    storage.overrides = [];
+}
+
+function getOverride(userId) {
+    return storage.overrides.find(function(o) { return o.userId === userId; });
+}
+
+var patches = [];
+
+exports.default = {
+    onLoad: function() {
+        var UserStore = findByStoreName("UserStore");
+        var UserProfileStore = findByStoreName("UserProfileStore");
+        var PresenceStore = findByStoreName("PresenceStore");
+
+        if (UserStore) {
+            var userPatch = after("getUser", UserStore, function(args, ret) {
+                if (!ret || !ret.id) return ret;
+                var override = getOverride(ret.id);
+                if (!override) return ret;
+                var modified = Object.assign({}, ret);
+                if (override.avatarUrl) {
+                    modified.avatar = override.avatarUrl;
+                    modified.avatarDecoration = null;
+                }
+                if (override.displayName) {
+                    modified.globalName = override.displayName;
+                }
+                if (override.bannerUrl) {
+                    modified.banner = override.bannerUrl;
+                }
+                return modified;
+            });
+            patches.push(userPatch);
+        }
+
+        if (UserProfileStore) {
+            var profilePatch = after("getUserProfile", UserProfileStore, function(args, ret) {
+                if (!ret) return ret;
+                var userId = args[0];
+                var override = getOverride(userId);
+                if (!override) return ret;
+                var modified = Object.assign({}, ret);
+                if (override.bio) modified.bio = override.bio;
+                if (override.pronouns) modified.pronouns = override.pronouns;
+                return modified;
+            });
+            patches.push(profilePatch);
+        }
+
+        if (PresenceStore) {
+            try {
+                var statusPatch = after("getState", PresenceStore, function(args, ret) {
+                    if (!ret || typeof ret.getStatus !== "function") return ret;
+                    var origGetStatus = ret.getStatus;
+                    ret.getStatus = function(userId) {
+                        var override = getOverride(userId);
+                        if (override && override.status) {
+                            var original = origGetStatus(userId);
+                            if (original && typeof original === "object") {
+                                return Object.assign({}, original, {status: override.status});
+                            }
+                            return {status: override.status};
+                        }
+                        return origGetStatus(userId);
+                    };
+                    return ret;
+                });
+                patches.push(statusPatch);
+            } catch (e) {
+                console.log("[FakeProfile] PresenceStore patch failed:", e);
+            }
+        }
+    },
+
+    onUnload: function() {
+        patches.forEach(function(p) {
+            try { if (p) p(); } catch (e) {}
+        });
+        patches = [];
+    },
+
+    settings: function() {
+        useProxy(storage);
+
+        var _React_useState = React.useState;
+        var editingIndexState = _React_useState(null);
+        var editingIndex = editingIndexState[0];
+        var setEditingIndex = editingIndexState[1];
+
+        var formState = _React_useState({
+            userId: "",
+            avatarUrl: "",
+            displayName: "",
+            bio: "",
+            status: "",
+            bannerUrl: "",
+            pronouns: ""
+        });
+        var formData = formState[0];
+        var setFormData = formState[1];
+
+        var overrides = storage.overrides || [];
+
+        var updateForm = function(key, value) {
+            setFormData(function(prev) {
+                var next = Object.assign({}, prev);
+                next[key] = value;
+                return next;
+            });
+        };
+
+        var clearForm = function() {
+            setEditingIndex(null);
+            setFormData({
+                userId: "",
+                avatarUrl: "",
+                displayName: "",
+                bio: "",
+                status: "",
+                bannerUrl: "",
+                pronouns: ""
+            });
+        };
+
+        var handleSave = function() {
+            if (!formData.userId || !formData.userId.trim()) return;
+            var newOverrides = overrides.slice();
+            var entry = {
+                userId: formData.userId.trim(),
+                avatarUrl: (formData.avatarUrl || "").trim(),
+                displayName: (formData.displayName || "").trim(),
+                bio: (formData.bio || "").trim(),
+                status: (formData.status || "").trim(),
+                bannerUrl: (formData.bannerUrl || "").trim(),
+                pronouns: (formData.pronouns || "").trim()
+            };
+
+            if (editingIndex !== null && editingIndex >= 0 && editingIndex < newOverrides.length) {
+                newOverrides[editingIndex] = entry;
+            } else {
+                var existingIdx = newOverrides.findIndex(function(o) { return o.userId === entry.userId; });
+                if (existingIdx >= 0) {
+                    newOverrides[existingIdx] = entry;
+                } else {
+                    newOverrides.push(entry);
+                }
+            }
+            storage.overrides = newOverrides;
+            clearForm();
+        };
+
+        var handleEdit = function(index) {
+            var o = overrides[index];
+            if (!o) return;
+            setEditingIndex(index);
+            setFormData({
+                userId: o.userId || "",
+                avatarUrl: o.avatarUrl || "",
+                displayName: o.displayName || "",
+                bio: o.bio || "",
+                status: o.status || "",
+                bannerUrl: o.bannerUrl || "",
+                pronouns: o.pronouns || ""
+            });
+        };
+
+        var handleRemove = function(index) {
+            var newOverrides = overrides.filter(function(_, i) { return i !== index; });
+            storage.overrides = newOverrides;
+            if (editingIndex === index) {
+                clearForm();
+            }
+        };
+
+        var inputStyle = {
+            backgroundColor: "#2f3136",
+            color: "#dcddde",
+            padding: 12,
+            borderRadius: 8,
+            fontSize: 14,
+            marginBottom: 12
+        };
+
+        var labelStyle = {
+            color: "#b9bbbe",
+            fontSize: 12,
+            marginBottom: 4
+        };
+
+        var btnStyle = {
+            backgroundColor: "#5865f2",
+            paddingVertical: 12,
+            paddingHorizontal: 16,
+            borderRadius: 8,
+            alignItems: "center",
+            justifyContent: "center",
+            flex: 1,
+            marginRight: 8
+        };
+
+        var btnDangerStyle = {
+            backgroundColor: "#ed4245",
+            paddingVertical: 12,
+            paddingHorizontal: 16,
+            borderRadius: 8,
+            alignItems: "center",
+            justifyContent: "center",
+            flex: 1
+        };
+
+        var btnSmallStyle = {
+            paddingVertical: 6,
+            paddingHorizontal: 12,
+            borderRadius: 6,
+            marginLeft: 8
+        };
+
+        var isEditing = editingIndex !== null;
+
+        // Build form section children
+        var formChildren = [
+            React.createElement(View, {key: "form-container", style: {padding: 16}}, [
+                // User ID
+                React.createElement(Text, {key: "label-uid", style: labelStyle}, "User ID (required):"),
+                React.createElement(TextInput, {
+                    key: "input-uid",
+                    style: inputStyle,
+                    placeholder: "123456789012345678",
+                    placeholderTextColor: "#72767d",
+                    value: formData.userId,
+                    onChangeText: function(text) { updateForm("userId", text); },
+                    editable: !isEditing
+                }),
+                // Avatar
+                React.createElement(Text, {key: "label-avatar", style: labelStyle}, "Avatar URL:"),
+                React.createElement(TextInput, {
+                    key: "input-avatar",
+                    style: inputStyle,
+                    placeholder: "https://example.com/avatar.png",
+                    placeholderTextColor: "#72767d",
+                    value: formData.avatarUrl,
+                    onChangeText: function(text) { updateForm("avatarUrl", text); }
+                }),
+                // Banner
+                React.createElement(Text, {key: "label-banner", style: labelStyle}, "Banner URL:"),
+                React.createElement(TextInput, {
+                    key: "input-banner",
+                    style: inputStyle,
+                    placeholder: "https://example.com/banner.png",
+                    placeholderTextColor: "#72767d",
+                    value: formData.bannerUrl,
+                    onChangeText: function(text) { updateForm("bannerUrl", text); }
+                }),
+                // Display Name
+                React.createElement(Text, {key: "label-name", style: labelStyle}, "Display Name:"),
+                React.createElement(TextInput, {
+                    key: "input-name",
+                    style: inputStyle,
+                    placeholder: "Custom Display Name",
+                    placeholderTextColor: "#72767d",
+                    value: formData.displayName,
+                    onChangeText: function(text) { updateForm("displayName", text); }
+                }),
+                // Bio
+                React.createElement(Text, {key: "label-bio", style: labelStyle}, "Bio / About Me:"),
+                React.createElement(TextInput, {
+                    key: "input-bio",
+                    style: Object.assign({}, inputStyle, {height: 80, textAlignVertical: "top"}),
+                    placeholder: "Custom bio text...",
+                    placeholderTextColor: "#72767d",
+                    value: formData.bio,
+                    onChangeText: function(text) { updateForm("bio", text); },
+                    multiline: true,
+                    numberOfLines: 4
+                }),
+                // Status
+                React.createElement(Text, {key: "label-status", style: labelStyle}, "Custom Status:"),
+                React.createElement(TextInput, {
+                    key: "input-status",
+                    style: inputStyle,
+                    placeholder: "Playing something...",
+                    placeholderTextColor: "#72767d",
+                    value: formData.status,
+                    onChangeText: function(text) { updateForm("status", text); }
+                }),
+                // Pronouns
+                React.createElement(Text, {key: "label-pronouns", style: labelStyle}, "Pronouns:"),
+                React.createElement(TextInput, {
+                    key: "input-pronouns",
+                    style: inputStyle,
+                    placeholder: "they/them",
+                    placeholderTextColor: "#72767d",
+                    value: formData.pronouns,
+                    onChangeText: function(text) { updateForm("pronouns", text); }
+                }),
+                // Buttons
+                React.createElement(View, {key: "btn-row", style: {flexDirection: "row", marginTop: 8}}, [
+                    React.createElement(TouchableOpacity, {
+                        key: "btn-save",
+                        style: btnStyle,
+                        onPress: handleSave,
+                        activeOpacity: 0.8
+                    }, React.createElement(Text, {style: {color: "#fff", fontSize: 14, fontWeight: "600"}},
+                        isEditing ? "Save Changes" : "Add Profile"
+                    )),
+                    isEditing ? React.createElement(TouchableOpacity, {
+                        key: "btn-cancel",
+                        style: btnDangerStyle,
+                        onPress: clearForm,
+                        activeOpacity: 0.8
+                    }, React.createElement(Text, {style: {color: "#fff", fontSize: 14, fontWeight: "600"}}, "Cancel")) : null
+                ])
+            ])
+        ];
+
+        // Build overrides list
+        var listChildren;
+        if (overrides.length === 0) {
+            listChildren = React.createElement(Text, {
+                key: "empty",
+                style: {color: "#72767d", textAlign: "center", padding: 24, fontSize: 14}
+            }, "No profile overrides yet. Add one above!");
+        } else {
+            listChildren = overrides.map(function(override, index) {
+                var activeFields = [
+                    override.avatarUrl && "Avatar",
+                    override.bannerUrl && "Banner",
+                    override.displayName && "Display Name",
+                    override.bio && "Bio",
+                    override.status && "Status",
+                    override.pronouns && "Pronouns"
+                ].filter(Boolean).join(", ") || "No modifications";
+
+                var leadingEl = override.avatarUrl
+                    ? React.createElement(Image, {
+                        source: {uri: override.avatarUrl},
+                        style: {width: 40, height: 40, borderRadius: 20}
+                    })
+                    : React.createElement(View, {
+                        style: {width: 40, height: 40, borderRadius: 20, backgroundColor: "#36393f", justifyContent: "center", alignItems: "center"}
+                    }, React.createElement(Text, {style: {color: "#72767d", fontSize: 16}}, "?"));
+
+                var trailingEl = React.createElement(View, {style: {flexDirection: "row"}}, [
+                    React.createElement(TouchableOpacity, {
+                        key: "btn-edit",
+                        style: Object.assign({}, btnSmallStyle, {backgroundColor: "#5865f2"}),
+                        onPress: function() { handleEdit(index); },
+                        activeOpacity: 0.8
+                    }, React.createElement(Text, {style: {color: "#fff", fontSize: 12}}, "Edit")),
+                    React.createElement(TouchableOpacity, {
+                        key: "btn-remove",
+                        style: Object.assign({}, btnSmallStyle, {backgroundColor: "#ed4245"}),
+                        onPress: function() { handleRemove(index); },
+                        activeOpacity: 0.8
+                    }, React.createElement(Text, {style: {color: "#fff", fontSize: 12}}, "Remove"))
+                ]);
+
+                return React.createElement(View, {key: index}, [
+                    React.createElement(FormRow, {
+                        key: "row",
+                        label: (override.displayName || "Unknown") + " (" + override.userId + ")",
+                        subLabel: activeFields,
+                        leading: leadingEl,
+                        trailing: trailingEl
+                    }),
+                    index < overrides.length - 1 ? React.createElement(FormDivider, {key: "div"}) : null
+                ]);
+            });
+        }
+
+        return React.createElement(ScrollView, {style: {flex: 1}}, [
+            React.createElement(FormSection, {
+                key: "form-section",
+                title: isEditing ? "Edit Profile Override" : "Add New Profile Override"
+            }, formChildren),
+            React.createElement(FormDivider, {key: "div-main"}),
+            React.createElement(FormSection, {
+                key: "list-section",
+                title: "Active Overrides (" + overrides.length + ")"
+            }, listChildren),
+            React.createElement(View, {key: "spacer", style: {height: 40}})
+        ]);
+    }
+};
+
+Object.defineProperty(exports, "__esModule", {value: true});
+return exports;
+})({}, vendetta.metro, vendetta.patcher, vendetta.plugin)})();
