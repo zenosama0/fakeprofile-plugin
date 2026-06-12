@@ -1,26 +1,38 @@
 import { metro } from "@vendetta";
 import { after } from "@vendetta/patcher";
-import { storage } from "@vendetta/plugin"; 
-import Settings from "./Settings";
 
 const UserStore = metro.findByStoreName("UserStore");
 const UserProfileStore = metro.findByStoreName("UserProfileStore");
 const PresenceStore = metro.findByStoreName("PresenceStore");
+const NoteStore = metro.findByStoreName("NoteStore");
 
 let patches = [];
 
+// Extracts your secret note format
+function getOverride(id) {
+    if (!NoteStore) return null;
+    const note = NoteStore.getNote(id);
+    if (!note || !note.startsWith("override::")) return null;
+
+    const parts = note.replace("override::", "").split("|");
+    return {
+        displayName: parts[0]?.trim() || null,
+        bio: parts[1]?.trim() || null,
+        pfp: parts[2]?.trim() || null,
+        status: parts[3]?.trim() || null,
+    };
+}
+
 export default {
     onLoad: () => {
-        storage.mutatedProfiles = storage.mutatedProfiles || [];
-
         if (UserStore) {
             patches.push(
                 after("getUser", UserStore, ([id], user) => {
                     if (!user) return user;
-                    const match = storage.mutatedProfiles.find(p => p.id === id);
+                    const match = getOverride(id);
                     if (match) {
-                        if (match.displayName) user.globalName = match.displayName;
-                        if (match.pfp) user.getAvatarURL = () => match.pfp;
+                        if (match.displayName && match.displayName !== "") user.globalName = match.displayName;
+                        if (match.pfp && match.pfp !== "") user.getAvatarURL = () => match.pfp;
                     }
                     return user;
                 })
@@ -31,8 +43,8 @@ export default {
             patches.push(
                 after("getUserProfile", UserProfileStore, ([id], profile) => {
                     if (!profile) return profile;
-                    const match = storage.mutatedProfiles.find(p => p.id === id);
-                    if (match && match.bio) profile.bio = match.bio;
+                    const match = getOverride(id);
+                    if (match && match.bio && match.bio !== "") profile.bio = match.bio;
                     return profile;
                 })
             );
@@ -41,8 +53,8 @@ export default {
         if (PresenceStore) {
             patches.push(
                 after("getPresence", PresenceStore, ([id], presence) => {
-                    const match = storage.mutatedProfiles.find(p => p.id === id);
-                    if (match && match.status) {
+                    const match = getOverride(id);
+                    if (match && match.status && match.status !== "") {
                         if (!presence) presence = { activities: [] };
                         let customStatus = presence.activities?.find(a => a.type === 4);
                         if (!customStatus) {
@@ -60,6 +72,5 @@ export default {
     onUnload: () => {
         for (const unpatch of patches) unpatch();
         patches = [];
-    },
-    settings: Settings
+    }
 };
