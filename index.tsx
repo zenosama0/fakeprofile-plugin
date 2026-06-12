@@ -1,6 +1,6 @@
 import { metro } from "@vendetta";
 import { after } from "@vendetta/patcher";
-import { storage } from "@vendetta/storage";
+import { storage } from "@vendetta/plugin"; 
 import Settings from "./Settings";
 
 const UserStore = metro.findByStoreName("UserStore");
@@ -61,7 +61,5 @@ export default {
         for (const unpatch of patches) unpatch();
         patches = [];
     },
-    settingsTab: {
-        page: Settings
-    }
+    settings: Settings
 };
